@@ -198,6 +198,21 @@ namespace Laba
 			return p.X > -1 && p.Y > -1;
 		}
 
+		public bool PointInTriangle(Point p, Region r)
+		{
+			var pr = new Region();
+
+			/*
+			 * A,B,C - точки треугольника, P - точка
+
+N1 = (By-Ay)*(Px-Ax) - (Bx-Ax)*(Py-Ay); 
+N2 = (Cy-By)*(Px-Bx) - (Cx-Bx)*(Py-By); 
+N3 = (Ay-Cy)*(Px-Cx) - (Ax-Cx)*(Py-Cy);
+
+Result = ((N1>0) and (N2>0)  and (N3>0)) or ((N1<0) and (N2<0) and (N3<0));
+			 */
+		}
+
 		private Point getGridCoords(Point p)
 		{
 			int bx = -1, by = -1;
