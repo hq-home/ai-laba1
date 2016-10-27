@@ -364,19 +364,6 @@ namespace Laba
 		#endregion
 
 		#region [ Helper Methods ]
-		private void BitsGrow()
-		{
-			var size = Height*Width;
-
-			if (_bits != null && size>_bits.Length)
-			{
-				var b = new bool[size];
-				Array.Copy(_bits, b, _bits.Length);
-				_bits = b;
-			}
-			else _bits = new bool[size];
-		}
-
 		private bool ChangeBitState(MouseButtons pressed, Point pos)
 		{
 			if (IsValidGridPos(pos))

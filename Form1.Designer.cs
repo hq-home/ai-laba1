@@ -44,13 +44,13 @@
 			this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
 			this.panel1.Location = new System.Drawing.Point(12, 65);
 			this.panel1.Name = "panel1";
-			this.panel1.Size = new System.Drawing.Size(235, 299);
+			this.panel1.Size = new System.Drawing.Size(205, 299);
 			this.panel1.TabIndex = 0;
 			// 
 			// label1
 			// 
 			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(13, 395);
+			this.label1.Location = new System.Drawing.Point(120, 16);
 			this.label1.Name = "label1";
 			this.label1.Size = new System.Drawing.Size(17, 13);
 			this.label1.TabIndex = 1;
@@ -59,7 +59,7 @@
 			// label2
 			// 
 			this.label2.AutoSize = true;
-			this.label2.Location = new System.Drawing.Point(13, 421);
+			this.label2.Location = new System.Drawing.Point(120, 42);
 			this.label2.Name = "label2";
 			this.label2.Size = new System.Drawing.Size(17, 13);
 			this.label2.TabIndex = 2;
@@ -68,7 +68,7 @@
 			// tbX
 			// 
 			this.tbX.Enabled = false;
-			this.tbX.Location = new System.Drawing.Point(36, 392);
+			this.tbX.Location = new System.Drawing.Point(143, 13);
 			this.tbX.Name = "tbX";
 			this.tbX.Size = new System.Drawing.Size(45, 20);
 			this.tbX.TabIndex = 3;
@@ -76,7 +76,7 @@
 			// tbY
 			// 
 			this.tbY.Enabled = false;
-			this.tbY.Location = new System.Drawing.Point(36, 418);
+			this.tbY.Location = new System.Drawing.Point(143, 39);
 			this.tbY.Name = "tbY";
 			this.tbY.Size = new System.Drawing.Size(45, 20);
 			this.tbY.TabIndex = 4;
