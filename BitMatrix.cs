@@ -77,7 +77,7 @@ namespace Laba
 
 		private void BitMatrix_MouseUp(object sender, MouseEventArgs e)
 		{
-			
+            _mode = BitMatrixMouseMode.Moving;
 		}
 
 		public bool IsResizable = true;
@@ -172,10 +172,21 @@ namespace Laba
 								ChangeBitState(e.Button, _lastPos);
 							}
 						}
-
-						//if()
 					}
+                    var rect = _workingRect;
+                    float delta = 0.60f * Step;
+                    float d = 2.0f;
 
+                    var pit = PointInTriangle(e.Location,
+                        new Point((int)(rect.Right - delta), rect.Bottom),
+                        new Point(rect.Right, (int)(rect.Bottom - delta)),
+                        new Point(rect.Right, rect.Bottom));
+                    
+                    if (hasChanges |= _isInBottomRightCorner != pit)
+                    {
+                        _isInBottomRightCorner = pit;
+                    }
+                    
 					break;
 					case BitMatrixMouseMode.Resizing:
 
@@ -198,20 +209,19 @@ namespace Laba
 			return p.X > -1 && p.Y > -1;
 		}
 
-		public bool PointInTriangle(Point p, Region r)
+		public bool PointInTriangle(Point p, Point a, Point b, Point c)
 		{
-			var pr = new Region();
+            var n1 = (b.Y - a.Y) * (p.X - a.X) - (b.X - a.X) * (p.Y - a.Y);
+            var n2 = (c.Y - b.Y) * (p.X - b.X) - (c.X - b.X) * (p.Y - b.Y);
+            var n3 = (a.Y - c.Y) * (p.X - c.X) - (a.X - c.X) * (p.Y - c.Y);
+            return ((n1 >= 0) && (n2 >= 0) && (n3 >= 0)) || ((n1 <= 0) && (n2 <= 0) && (n3 <= 0));
 
-			/*
-			 * A,B,C - точки треугольника, P - точка
-
+            /*
+             
 N1 = (By-Ay)*(Px-Ax) - (Bx-Ax)*(Py-Ay); 
 N2 = (Cy-By)*(Px-Bx) - (Cx-Bx)*(Py-By); 
-N3 = (Ay-Cy)*(Px-Cx) - (Ax-Cx)*(Py-Cy);
-
-Result = ((N1>0) and (N2>0)  and (N3>0)) or ((N1<0) and (N2<0) and (N3<0));
-			 */
-		}
+N3 = (Ay-Cy)*(Px-Cx) - (Ax-Cx)*(Py-Cy);/*/
+        }
 
 		private Point getGridCoords(Point p)
 		{
@@ -254,10 +264,10 @@ Result = ((N1>0) and (N2>0)  and (N3>0)) or ((N1<0) and (N2<0) and (N3<0));
 			e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
 
 			using (var font = new Font(Font.FontFamily, 8f))
-			using (var pen = new Pen(Color.FromArgb(50, Color.Navy), isOverGrid ? 3 : 1))
+			using (var pen = new Pen(Color.FromArgb(50, Color.Navy), 1))
 			{
 				e.Graphics.DrawRectangle(pen, rect);
-				pen.Width = 1;
+
 				pen.DashPattern = new float[] { 4.0F, 2.0F};
 				int i = 0;
 				int dx = -2, dy = 15;
@@ -281,6 +291,21 @@ Result = ((N1>0) and (N2>0)  and (N3>0)) or ((N1<0) and (N2<0) and (N3<0));
 					e.Graphics.DrawString(i.ToString(), font, Brushes.Navy, rect.Left - 15, y - dy);
 					i++;
 				}
+
+                if (isOverGrid && _isInBottomRightCorner)
+                {
+                    float delta1 = 0.20f * Step;
+                    float delta2 = 0.40f * Step;
+                    float delta3 = 0.60f * Step;
+                    float d = 2.0f;
+                    pen.Width = 2;
+                    pen.DashPattern = new float[] {64.0f};
+                    e.Graphics.DrawLine(pen, rect.Right, rect.Bottom + Step/2, rect.Right, rect.Top);
+                    e.Graphics.DrawLine(pen, rect.Left, rect.Bottom, rect.Right + Step/2, rect.Bottom);
+                    e.Graphics.DrawLine(pen, rect.Right - delta1, rect.Bottom - d, rect.Right - d, rect.Bottom - delta1);
+                    e.Graphics.DrawLine(pen, rect.Right - delta2, rect.Bottom - d, rect.Right - d, rect.Bottom - delta2);
+                    e.Graphics.DrawLine(pen, rect.Right - delta3, rect.Bottom - d, rect.Right - d, rect.Bottom - delta3);
+                }
 
 				var fillBrush = Brushes.Navy;
 				for (int x = 0; x < Width; x++)
