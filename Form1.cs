@@ -19,8 +19,11 @@ namespace Laba
 
 		private void Form1_Load(object sender, EventArgs e)
 		{
-			var ch = new BitMatrix { Parent = panel1, Dock = DockStyle.Fill };
-			ch.MouseHovered += ch_MouseHovered;
+			var bm = new BitMatrix { Parent = panel1, Dock = DockStyle.Fill };
+			bm.MouseHovered += ch_MouseHovered;
+
+			tbColumns.Text = bm.Width.ToString();
+			tbRows.Text = bm.Height.ToString();
 		}
 
 		void ch_MouseHovered(object sender, BitMatrixEventArgs e)
