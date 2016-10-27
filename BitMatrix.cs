@@ -31,14 +31,13 @@ namespace Laba
 		#region [ Constants ]
 
 		public const int MAXWIDTH = 8;
-		public const int MAXHEIGHT = 16;
+		public const int MAXHEIGHT = 12;
 		public const int MINWIDTH = 3;
 		public const int MINHEIGHT = 5;
 
-		const float tri_delta = 0.60f * Step;
+		const float tri_delta = 0.60f;
 		const float tri_d = 2.0f;
 
-		
 		#endregion
 		/// <summary>
 		/// Mouse Cursor fly in right-bottom corner of a Grid
@@ -77,9 +76,7 @@ namespace Laba
 			{
 				if(_width != value)
 				{
-					var arrayGrow = value > _width;
 					_width = value;
-					if (arrayGrow) BitsGrow();
 					RecalcWorkingRect();
 				}
 			}
@@ -94,9 +91,7 @@ namespace Laba
 			{
 				if (_height != value)
 				{
-					var arrayGrow = value > _height;
 					_height = value;
-					if (arrayGrow) BitsGrow();
 					RecalcWorkingRect();
 				}
 			}
@@ -105,7 +100,7 @@ namespace Laba
 		/// <summary>
 		/// Grid representation as solid bit array
 		/// </summary>
-		private bool[] _bits = null;
+		private bool[] _bits = new bool[MAXHEIGHT*MAXHEIGHT];
 		public bool[] Bits
 		{
 			get { return _bits; }
@@ -144,13 +139,19 @@ namespace Laba
 
 		#endregion
 
-		public BitMatrix()
+		public BitMatrix():this(5,7)
+		{
+		}
+
+		public BitMatrix(int width, int height, bool isResizable = true)
 		{
 			SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.UserPaint, true);
 			Step = 20;
 			Indent = 20;
-			Width = 9;
-			Height = 10;
+			_width = width;
+			_height = height;
+			RecalcWorkingRect();
+			IsResizable = isResizable;
 
 			this.MouseMove += BitMatrix_MouseHover;
 			this.MouseDown += BitMatrix_MouseDown;
@@ -224,11 +225,10 @@ namespace Laba
 						}
 					}
 					var rect = _workingRect;
-					//float delta = 0.60f * Step;
-
+					var d = tri_delta*Step;
 					var pit = PointInTriangle(e.Location,
-						new Point((int)(rect.Right - tri_delta), rect.Bottom),
-						new Point(rect.Right, (int)(rect.Bottom - tri_delta)),
+						new Point((int)(rect.Right - d), rect.Bottom),
+						new Point(rect.Right, (int)(rect.Bottom - d)),
 						new Point(rect.Right, rect.Bottom));
 
 					if (hasChanges |= _isInBottomRightCorner != pit)
@@ -236,13 +236,36 @@ namespace Laba
 						_isInBottomRightCorner = pit;
 					}
 
-
-
 					break;
 				case BitMatrixMouseMode.Resizing:
+					int x = e.X, y = e.Y;
 
+					if (_workingRect.Left + MINWIDTH*Step > e.X)
+						x = _workingRect.Left + MINWIDTH * Step;
+					else if (_workingRect.Left + MAXWIDTH * Step < e.X)
+						x = _workingRect.Left + MAXWIDTH * Step;
 
+					if (_workingRect.Top + MINHEIGHT * Step > e.Y)
+						y = _workingRect.Top + MINHEIGHT * Step;
+					else if (_workingRect.Top + MAXHEIGHT * Step < e.Y)
+						y = _workingRect.Top + MAXHEIGHT * Step;
 
+					if (x != e.X || y != e.Y) Cursor.Position = this.PointToScreen(new Point(x, y));
+
+					var p = ToGridCoords(new Point(x, y));
+					if(p.X != Width-1 || p.Y != Height-1)
+					{
+						this.Invalidate(new Rectangle(_workingRect.Left - 1 - Indent, _workingRect.Top - 1, _workingRect.Width + 2*Indent + 3, _workingRect.Height + 2*Indent + 3));
+						if (p.X != Width - 1)
+						{
+							Width = p.X + 1;
+						}
+						if (p.Y != Height - 1)
+						{
+							Height = p.Y + 1;
+						}
+						hasChanges = true;
+					}
 					break;
 			}
 
@@ -250,7 +273,9 @@ namespace Laba
 
 			if (hasChanges)
 			{
-				this.Invalidate(new Rectangle(_workingRect.Left - 1, _workingRect.Top - 1, _workingRect.Width + 2, _workingRect.Height + 2));
+				if(_mode == BitMatrixMouseMode.Moving)
+					this.Invalidate(new Rectangle(_workingRect.Left - 1, _workingRect.Top - 1, _workingRect.Width + 2, _workingRect.Height + 2));
+					
 				this.Update();
 			}
 
@@ -296,7 +321,7 @@ namespace Laba
 					i++;
 				}
 
-				if (IsResizable && isOverGrid && _isInBottomRightCorner)
+				if (IsResizable && _isInBottomRightCorner)
 				{
 					float delta1 = 0.20f * Step;
 					float delta2 = 0.40f * Step;
@@ -304,8 +329,8 @@ namespace Laba
 					float d = 2.0f;
 					pen.Width = 2;
 					pen.DashPattern = new float[] { 64.0f };
-					e.Graphics.DrawLine(pen, rect.Right, rect.Bottom + Step / 2, rect.Right, rect.Top);
-					e.Graphics.DrawLine(pen, rect.Left, rect.Bottom, rect.Right + Step / 2, rect.Bottom);
+					e.Graphics.DrawLine(pen, rect.Right, rect.Bottom, rect.Right, rect.Top);
+					e.Graphics.DrawLine(pen, rect.Left, rect.Bottom, rect.Right, rect.Bottom);
 					e.Graphics.DrawLine(pen, rect.Right - delta1, rect.Bottom - d, rect.Right - d, rect.Bottom - delta1);
 					e.Graphics.DrawLine(pen, rect.Right - delta2, rect.Bottom - d, rect.Right - d, rect.Bottom - delta2);
 					e.Graphics.DrawLine(pen, rect.Right - delta3, rect.Bottom - d, rect.Right - d, rect.Bottom - delta3);
@@ -322,10 +347,9 @@ namespace Laba
 						}
 					}
 				}
-
 			}
 
-			if (isOverGrid && IsValidGridPos(_lastPos))
+			if (_mode == BitMatrixMouseMode.Moving && isOverGrid && IsValidGridPos(_lastPos))
 			{
 				e.Graphics.DrawRectangle(new Pen(Color.FromArgb(60, 0, 0, 128), 3),
 								  new Rectangle(_workingRect.Left + _lastPos.X * Step, _workingRect.Top + _lastPos.Y * Step, Step, Step));
@@ -342,10 +366,15 @@ namespace Laba
 		#region [ Helper Methods ]
 		private void BitsGrow()
 		{
-			var b = new bool[Height * Step + Width];
-			if (_bits != null)
+			var size = Height*Width;
+
+			if (_bits != null && size>_bits.Length)
+			{
+				var b = new bool[size];
 				Array.Copy(_bits, b, _bits.Length);
-			_bits = b;
+				_bits = b;
+			}
+			else _bits = new bool[size];
 		}
 
 		private bool ChangeBitState(MouseButtons pressed, Point pos)
@@ -422,6 +451,34 @@ namespace Laba
 			{
 				var ly = _workingRect.Top + y * Step + 1;
 				var ry = ly + Step - 2;
+				if (p.Y >= ly && p.Y <= ry)
+				{
+					by = y;
+					break;
+				}
+			}
+			return new Point(bx, by);
+		}
+
+		private Point ToGridCoords(Point p)
+		{
+			int bx = -1, by = -1;
+
+			for (int x = 0; x < MAXWIDTH; x++)
+			{
+				var lx = _workingRect.Left + x*Step;
+				var rx = lx + Step;
+				if (p.X >= lx && p.X <= rx)
+				{
+					bx = x;
+					break;
+				}
+			}
+
+			for (int y = 0; y < MAXHEIGHT; y++)
+			{
+				var ly = _workingRect.Top + y * Step;
+				var ry = ly + Step;
 				if (p.Y >= ly && p.Y <= ry)
 				{
 					by = y;

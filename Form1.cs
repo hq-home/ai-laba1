@@ -17,9 +17,10 @@ namespace Laba
 			InitializeComponent();
 		}
 
+		private BitMatrix bm;
 		private void Form1_Load(object sender, EventArgs e)
 		{
-			var bm = new BitMatrix { Parent = panel1, Dock = DockStyle.Fill };
+			bm = new BitMatrix(3, 5) {Parent = panel1, Dock = DockStyle.Fill};
 			bm.MouseHovered += ch_MouseHovered;
 
 			tbColumns.Text = bm.Width.ToString();
@@ -33,6 +34,8 @@ namespace Laba
 				tbX.Text = e.ControlPosition.X.ToString();
 				tbY.Text = e.ControlPosition.Y.ToString();
 			}
+			tbColumns.Text = bm.Width.ToString();
+			tbRows.Text = bm.Height.ToString();
 		}
 	}
 }
