@@ -20,12 +20,21 @@ namespace Laba
 		private BitMatrix bm;
 		private void Form1_Load(object sender, EventArgs e)
 		{
+            
+            //this.KeyPreview = true;
 			bm = new BitMatrix(3, 5) {Parent = panel1, Dock = DockStyle.Fill};
 			bm.MouseHovered += ch_MouseHovered;
 
+            this.KeyDown += panel1_KeyDown;
+            
 			tbColumns.Text = bm.Width.ToString();
 			tbRows.Text = bm.Height.ToString();
 		}
+
+        protected void panel1_KeyDown(object sender, KeyEventArgs e)
+        {
+            var s = 0;
+        }
 
 		void ch_MouseHovered(object sender, BitMatrixEventArgs e)
 		{

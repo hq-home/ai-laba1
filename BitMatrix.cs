@@ -145,48 +145,105 @@ namespace Laba
 
 		public BitMatrix(int width, int height, bool isResizable = true)
 		{
-			SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.UserPaint, true);
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.UserPaint | ControlStyles.Selectable, true);
 			Step = 20;
 			Indent = 20;
 			_width = width;
 			_height = height;
 			RecalcWorkingRect();
 			IsResizable = isResizable;
+            _preserveConfigIsResizable = isResizable;
 
 			this.MouseMove += BitMatrix_MouseHover;
 			this.MouseDown += BitMatrix_MouseDown;
 			this.MouseUp += BitMatrix_MouseUp;
+            this.KeyDown += BitMatrix_KeyDown;
+            this.KeyUp += BitMatrix_KeyUp;
+            this.PreviewKeyDown += BitMatrix_PreviewKeyDown;
+            this.Focus();
 		}
+
+        protected void BitMatrix_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Right || keyData == Keys.Left || keyData == Keys.Up || keyData == Keys.Down)
+            {
+                //OnKeyDown(New KeyEventArgs(keydata))
+                return true;
+            }
+            else 
+                return base.ProcessCmdKey(ref msg, keyData);
+        }
+/*  Protected Overrides Function ProcessCmdKey(ByRef msg As Message, ByVal keydata As Keys) As Boolean
+
+If keydata = Keys.Right Or keydata = Keys.Left Or keydata = Keys.Up Or keydata = Keys.Down Then
+  OnKeyDown(New KeyEventArgs(keydata))
+  ProcessCmdKey = True
+Else
+  ProcessCmdKey = MyBase.ProcessCmdKey(msg, keydata)
+  End If
+End Function
+*/
+        private bool isAltPressed = false;
+        //private bool isLeftButtonPressed = false;
+
+        protected void BitMatrix_KeyUp(object sender, KeyEventArgs e)
+        {
+            isAltPressed = e.Alt;
+        }
+
+        protected void BitMatrix_KeyDown(object sender, KeyEventArgs e)
+        {
+            isAltPressed = e.Alt;
+        }
 
 		#region [ Internal Events ]
 		protected void BitMatrix_MouseUp(object sender, MouseEventArgs e)
 		{
             _mode = BitMatrixMouseMode.Moving;
+            IsResizable = _preserveConfigIsResizable;
+
+            var hasChanges = _workingRect.Contains(e.Location) != isOverGrid;
+
+            if (hasChanges)
+            {
+                isOverGrid = !isOverGrid;
+            }
+            isOverGrid = _workingRect.Contains(e.Location);
+
+            SetCursorView();
+
+            if (hasChanges)
+            {
+                this.Invalidate(new Rectangle(_workingRect.Left - 1, _workingRect.Top - 1, _workingRect.Width + 2, _workingRect.Height + 2));
+                this.Update();
+            }
 		}
 
+        private bool _preserveConfigIsResizable;
 		protected void BitMatrix_MouseDown(object sender, MouseEventArgs e)
 		{
-			if (isOverGrid)
-			{
-				switch (_mode)
-				{
-					case BitMatrixMouseMode.Moving:
-						if (IsResizable && _isInBottomRightCorner)
-						{
-							_mode = BitMatrixMouseMode.Resizing;
-						}
-						else if (ChangeBitState(e.Button, _lastPos))
-						{
-							this.Invalidate(new Rectangle(_workingRect.Left - 1, _workingRect.Top - 1, _workingRect.Width + 2,
-														  _workingRect.Height + 2));
-							this.Update();
-						}
-						break;
-					case BitMatrixMouseMode.Resizing:
-						break;
-				}
-
-			}
+            switch (_mode)
+            {
+                case BitMatrixMouseMode.Moving:
+                    if (IsResizable && _isInBottomRightCorner)
+                    {
+                        _mode = BitMatrixMouseMode.Resizing;
+                    }
+                    else if (isOverGrid && ChangeBitState(e.Button, _lastPos))
+                    {
+                        IsResizable = false;
+                        this.Invalidate(new Rectangle(_workingRect.Left - 1, _workingRect.Top - 1, _workingRect.Width + 2, _workingRect.Height + 2));
+                        this.Update();
+                    }
+                    break;
+                case BitMatrixMouseMode.Resizing:
+                    break;
+            }
 
 			SetCursorView();
 
@@ -231,11 +288,14 @@ namespace Laba
 						new Point(rect.Right, (int)(rect.Bottom - d)),
 						new Point(rect.Right, rect.Bottom));
 
-					if (hasChanges |= _isInBottomRightCorner != pit)
+                    hasChanges |= isAltPressed && _isInBottomRightCorner != pit;
+                    _isInBottomRightCorner = pit;
+
+					/*if (hasChanges |= (isAltPressed && _isInBottomRightCorner != pit))
 					{
 						_isInBottomRightCorner = pit;
 					}
-
+                    */
 					break;
 				case BitMatrixMouseMode.Resizing:
 					int x = e.X, y = e.Y;
@@ -264,7 +324,7 @@ namespace Laba
 						{
 							Height = p.Y + 1;
 						}
-						hasChanges = true;
+                        hasChanges = true;
 					}
 					break;
 			}
